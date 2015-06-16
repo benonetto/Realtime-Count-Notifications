@@ -91,7 +91,7 @@ if($result || !$isAuthRequired){
 </head>
 <body>
     <input type="text" id="message" />
-    <input type="button" onclick="sendMessage('myChannel');" value="Send to myChannel" />
+    <input type="button" id="myButton" value="Send to myChannel" />
 	<div class="notifications">0</div>
     <div id="log"></div>
 
@@ -114,20 +114,43 @@ if($result || !$isAuthRequired){
                 channels: [
                     {name: 'myChannel'}
                 ]
-            }).bind(
-            {
-                message: function(e) {
-                    var log = $("#log");
-					var count = ++number;
-					//verifica se a mensagem está vazia / check empty message
-					if(e.message != ''){
-                    	log.prepend('<span class="msg">Message received: ' + e.message + '</span>');
-						$('.notifications').html(count);
-						$('.notifications').slideDown();
-					}
-                }
             });
+			
+			xRTML.TagManager.create({
+							name: 'Broadcast',
+							connections: ['myConn'],
+							channelid: 'myChannel',
+							dispatchers: [
+							{
+								event: 'click',
+								target: '#myButton',
+								callback: function () {
+									return xRTML.MessageManager.create({
+										trigger: ['myTrigger'],
+										action: '',
+										data: {text: $('#message').val(), count:++number} 
+									});
+								}
+							}
+							]
+				});
+
         });
+		
+		xRTML.TagManager.create({
+						name: 'Execute',
+						triggers: ['myTrigger'],
+						callback: function (data) {
+		                    var log = $("#log");
+							//verifica se a mensagem está vazia / check empty message
+							//if(e.message != ''){
+		                    	log.prepend('<span class="msg">Message received: ' + data.text + '</span>');
+								$('.notifications').html(data.count);
+								$('.notifications').slideDown();
+							//}
+						}
+		});
+		
 		
 		$('.notifications').click(function(){
 			//zera a contagem de notificações
@@ -135,15 +158,7 @@ if($result || !$isAuthRequired){
 			$(this).html(number);
 			$('.msg').fadeIn();
 		});
-		//função de mensagem, pega o valor do campo #message (input)
-        function sendMessage(channel){
-            var msg = $('#message').val();
-            xRTML.ConnectionManager.sendMessage({
-                connections: ['myConn'],
-                channel: channel,
-                content: msg
-            });
-        }
+
     </script>
 
 </body>
